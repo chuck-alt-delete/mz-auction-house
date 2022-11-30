@@ -29,37 +29,31 @@ async def event_generator(request: Request, conn: psycopg.AsyncConnection):
             async with conn:
                 async with conn.cursor() as cur:
                     _logger.info("made it here!")
-                    await cur.execute(
-                    """SET CLUSTER = auction_house;
-                        SUBSCRIBE (
+                    await cur.execute("SET CLUSTER = auction_house")
+                    async for row in cur.stream(
+                    """SUBSCRIBE (
                             SELECT auction_id, bid_id, item, amount
                             FROM winning_bids
-                        );
-                    """)
-                    conn.commit()
+                        )
+                    """):
+                        _logger.info("about to yield a row")
+                        yield row
                     _logger.info("hello")
-                    data_exists = await cur.fetchone()
-                    if data_exists:
-                        async for row in cur:
-                            yield row   
-                    else:
-                        _logger.info("no data yet")
-                        yield "no data yet"
-                        asyncio.sleep(1)
-                        continue
+                asyncio.sleep(1)
                 
     except Exception as err:
         _logger.error(err)
 
 @app.get("/subscribe")
 async def message_stream(request: Request):
-
     try:
         conn = await psycopg.AsyncConnection.connect(DSN)
-        conn.add_notice_handler(log_db_diagnosis_callback)        
+        conn.add_notice_handler(log_db_diagnosis_callback)
         return EventSourceResponse(event_generator(request, conn))
     finally:
-        conn.close()
+        pass
+    #     await conn.commit()
+    #     await conn.close()
 
 
 
