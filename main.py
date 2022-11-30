@@ -30,6 +30,7 @@ async def event_generator(request: Request, conn: psycopg.AsyncConnection):
                 async with conn.cursor() as cur:
                     _logger.info("made it here!")
                     await cur.execute("SET CLUSTER = auction_house")
+                    _logger.info("just set the cluster")
                     async for row in cur.stream(
                     """SUBSCRIBE (
                             SELECT auction_id, bid_id, item, amount
@@ -38,8 +39,9 @@ async def event_generator(request: Request, conn: psycopg.AsyncConnection):
                     """):
                         _logger.info("about to yield a row")
                         yield row
+                    yield "waiting for more data"
                     _logger.info("hello")
-                asyncio.sleep(1)
+                    asyncio.sleep(1)
                 
     except Exception as err:
         _logger.error(err)
