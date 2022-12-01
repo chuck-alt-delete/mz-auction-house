@@ -1,63 +1,39 @@
+'''
+Generate events that go to the browser with Server Sent Events (SSE).
+Materialize will push events whenever someone's bid has won an auction.
+'''
+
 import logging
-import asyncio
 import psycopg
 from sse_starlette.sse import EventSourceResponse
 from fastapi import FastAPI, Request
 from fastapi.logger import logger
 import uvicorn
 
+from event_generator import event_generator
 from config import DSN
 
+# Logging stuff
 _logger = logging.getLogger('uvicorn.error')
+# Connect _logger with FastAPI's logging
 logger.handlers = _logger.handlers
 def log_db_diagnosis_callback(diagnosis: psycopg.Error.diag):
+    '''Include database diagnostic messages in server logs'''
     _logger.info(f"The database says: {diagnosis.severity} - {diagnosis.message_primary}")
 
 app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
-
-
-async def event_generator(request: Request, conn: psycopg.AsyncConnection):
-    try:
-        while True:
-            if await request.is_disconnected():
-                break
-            yield "wait a moment..."
-            async with conn:
-                async with conn.cursor() as cur:
-                    _logger.info("made it here!")
-                    await cur.execute("SET CLUSTER = auction_house")
-                    _logger.info("just set the cluster")
-                    async for row in cur.stream(
-                    """SUBSCRIBE (
-                            SELECT auction_id, bid_id, item, amount
-                            FROM winning_bids
-                        )
-                    """):
-                        _logger.info("about to yield a row")
-                        yield row
-                    yield "waiting for more data"
-                    _logger.info("hello")
-                    asyncio.sleep(1)
-                
-    except Exception as err:
-        _logger.error(err)
+    '''Shill Materialize'''
+    return {"message": "Hello world. Check out materialize.com!"}
 
 @app.get("/subscribe")
 async def message_stream(request: Request):
-    try:
-        conn = await psycopg.AsyncConnection.connect(DSN)
-        conn.add_notice_handler(log_db_diagnosis_callback)
-        return EventSourceResponse(event_generator(request, conn))
-    finally:
-        pass
-    #     await conn.commit()
-    #     await conn.close()
-
-
+    '''Create async database connection and retrieve events from the event generator for SSE'''
+    conn = await psycopg.AsyncConnection.connect(DSN)
+    conn.add_notice_handler(log_db_diagnosis_callback)
+    return EventSourceResponse(event_generator(request, conn))
 
 if __name__ == "__main__":
     logger.setLevel(_logger.level)
