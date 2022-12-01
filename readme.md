@@ -7,6 +7,8 @@ The purpose of this repo is to add a client component beyond `psql`. Here, we ha
 
 Another great thing about Materialize is that it supports Strict Serializability, which is the [highest level of consistency](http://jepsen.io/consistency). What that means in this demo is when our server receives an auction winner, we can be certain that person actually won the auction. We don't have to implement extra logic to account for eventual consistency (avoiding having to learn a complex stream processing framework in the process). We just read from Materialize like we would any Postgres database, and we don't have to care that it's powered by an [awesome stream processing engine underneath](https://timelydataflow.github.io/differential-dataflow/)
 
+## Quick Video
+[![short video demo](https://img.youtube.com/vi/3PpQXAZqWsQ/0.jpg)](https://youtu.be/3PpQXAZqWsQ_0)
 ## Setup
 
 ### Materialize Database
