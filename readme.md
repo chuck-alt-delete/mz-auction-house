@@ -10,56 +10,63 @@ Another great thing about Materialize is that it supports Strict Serializability
 ## Setup
 
 ### Materialize Database
-This web application assumes the existence of a Materialize database with the Auction House demo data available. After [signing up for Materialize](https://www.materialize.com/register), enabling a region and creating an App Password, you can use this `psql` command to initialize the demo:
+This web application assumes the existence of a Materialize database with the Auction House demo data available.
 
-```bash
-psql "postgres://<your_email>@<your_mz_host>:6875/materialize" << EOF
-CREATE SOURCE IF NOT EXISTS auction_house_source
-FROM LOAD GENERATOR AUCTION (TICK INTERVAL '1s') 
-FOR ALL TABLES 
-WITH (SIZE = '3xsmall');
+1. [Sign up for Materialize](https://www.materialize.com/register)
+1. Enable a region
+1. Create an App Password
+1. Fill out your database credentials in a file called `.env` and source those variables. See [example.env](./example.env) as reference.
 
-CREATE CLUSTER auction_house REPLICAS (xsmall_replica (SIZE 'xsmall'));
-SET CLUSTER = auction_house;
+        source .env
 
-CREATE VIEW on_time_bids AS
-  SELECT
-    bids.id       AS bid_id,
-    auctions.id   AS auction_id,
-    auctions.seller,
-    bids.buyer,
-    auctions.item,
-    bids.bid_time,
-    auctions.end_time,
-    bids.amount
-  FROM bids
-  JOIN auctions ON bids.auction_id = auctions.id
-  WHERE bids.bid_time < auctions.end_time;
+1. you can use this `psql` command to create resources and get real-time auction house data flowing:
 
-CREATE VIEW highest_bid_per_auction AS
-SELECT grp.auction_id, bid_id, buyer, seller, item, amount, bid_time, end_time FROM
-    (SELECT DISTINCT auction_id FROM on_time_bids) grp,
-    LATERAL (
-        SELECT * FROM on_time_bids
-        WHERE auction_id = grp.auction_id
-        ORDER BY amount DESC LIMIT 1
-    );
+    ```bash
+    psql "postgres://$MZ_USER:$MZ_PASSWORD@$MZ_HOST:$MZ_PORT/$MZ_DB" << EOF
+    CREATE SOURCE IF NOT EXISTS auction_house_source
+    FROM LOAD GENERATOR AUCTION (TICK INTERVAL '1s') 
+    FOR ALL TABLES 
+    WITH (SIZE = '3xsmall');
 
-CREATE MATERIALIZED VIEW winning_bids AS
-SELECT * FROM highest_bid_per_auction
-WHERE end_time < mz_now();
-EOF
-```
+    CREATE CLUSTER auction_house REPLICAS (xsmall_replica (SIZE 'xsmall'));
+    SET CLUSTER = auction_house;
+
+    CREATE VIEW on_time_bids AS
+    SELECT
+        bids.id       AS bid_id,
+        auctions.id   AS auction_id,
+        auctions.seller,
+        bids.buyer,
+        auctions.item,
+        bids.bid_time,
+        auctions.end_time,
+        bids.amount
+    FROM bids
+    JOIN auctions ON bids.auction_id = auctions.id
+    WHERE bids.bid_time < auctions.end_time;
+
+    CREATE VIEW highest_bid_per_auction AS
+    SELECT grp.auction_id, bid_id, buyer, seller, item, amount, bid_time, end_time FROM
+        (SELECT DISTINCT auction_id FROM on_time_bids) grp,
+        LATERAL (
+            SELECT * FROM on_time_bids
+            WHERE auction_id = grp.auction_id
+            ORDER BY amount DESC LIMIT 1
+        );
+
+    CREATE INDEX winning_bids AS
+    SELECT * FROM highest_bid_per_auction
+    WHERE end_time < mz_now();
+    EOF
+    ```
 
 ### Server
 
-1. Fill out your database credentials in a file called `.env`. See [example.env](./example.env) as reference.
+Create a virtual environment and install required dependencies.
 
-2. Create a virtual environment and install required dependencies.
-
-        python3 -m venv .venv
-        source .venv/bin/activate
-        pip install -r requirements.txt
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt
 
 ## Run
 
@@ -73,7 +80,7 @@ EOF
 ## Teardown
 
 ```bash
-psql "postgres://<your_email>@<your_mz_host>:6875/materialize" << EOF
+psql "postgres://$MZ_USER:$MZ_PASSWORD@$MZ_HOST:$MZ_PORT/$MZ_DB" << EOF
 DROP SOURCE auction_house_source CASCADE;
 DROP CLUSTER auction_house CASCADE;
 EOF
