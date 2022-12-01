@@ -8,7 +8,7 @@ config = dotenv_values()
 CLUSTER = "auction_house"
 
 # Create Data Source Name (DSN) string
-DSN = f'user={config["MZ_USER"]} password={config["MZ_PASSWORD"]} host={config["MZ_HOST"]} port={config["MZ_PORT"]} dbname={config["MZ_DB"]} sslmode=require'
+DSN = f'user={config["MZ_EMAIL_PREFIX"]}@{config["MZ_EMAIL_SUFFIX"]} password={config["MZ_PASSWORD"]} host={config["MZ_HOST"]} port={config["MZ_PORT"]} dbname={config["MZ_DB"]} sslmode=require'
 
 if __name__=="__main__":
     print(config)

@@ -22,7 +22,7 @@ This web application assumes the existence of a Materialize database with the Au
 1. you can use this `psql` command to create resources and get real-time auction house data flowing:
 
     ```bash
-    psql "postgres://$MZ_USER:$MZ_PASSWORD@$MZ_HOST:$MZ_PORT/$MZ_DB" << EOF
+    psql "postgres://$MZ_EMAIL_PREFIX%40$MZ_EMAIL_SUFFIX:$MZ_PASSWORD@$MZ_HOST:$MZ_PORT/$MZ_DB" << EOF
     CREATE SOURCE IF NOT EXISTS auction_house_source
     FROM LOAD GENERATOR AUCTION (TICK INTERVAL '1s') 
     FOR ALL TABLES 
@@ -54,9 +54,12 @@ This web application assumes the existence of a Materialize database with the Au
             ORDER BY amount DESC LIMIT 1
         );
 
-    CREATE INDEX winning_bids AS
+    CREATE VIEW winning_bids AS
     SELECT * FROM highest_bid_per_auction
     WHERE end_time < mz_now();
+
+    CREATE DEFAULT INDEX winning_bids_idx ON winning_bids;
+
     EOF
     ```
 
@@ -80,7 +83,7 @@ Create a virtual environment and install required dependencies.
 ## Teardown
 
 ```bash
-psql "postgres://$MZ_USER:$MZ_PASSWORD@$MZ_HOST:$MZ_PORT/$MZ_DB" << EOF
+psql "postgres://$MZ_EMAIL_PREFIX%40$MZ_EMAIL_SUFFIX:$MZ_PASSWORD@$MZ_HOST:$MZ_PORT/$MZ_DB" << EOF
 DROP SOURCE auction_house_source CASCADE;
 DROP CLUSTER auction_house CASCADE;
 EOF
