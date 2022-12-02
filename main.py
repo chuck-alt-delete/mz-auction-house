@@ -6,7 +6,7 @@ Materialize will push events whenever someone's bid has won an auction.
 import logging
 import psycopg
 from sse_starlette.sse import EventSourceResponse
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Query
 from fastapi.logger import logger
 import uvicorn
 
@@ -30,7 +30,7 @@ async def root():
     return {"message": "Hello world. Check out materialize.com!"}
 
 @app.get("/subscribe/", response_model=WinningBid)
-async def message_stream(request: Request, amount: int | None = None):
+async def message_stream(request: Request, amount: list[int] | None = Query(default=None)):
     '''Create async database connection and retrieve events from the event generator for SSE'''
     conn = await psycopg.AsyncConnection.connect(DSN)
     conn.add_notice_handler(log_db_diagnosis_callback)
