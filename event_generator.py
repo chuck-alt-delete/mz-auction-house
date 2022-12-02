@@ -15,8 +15,6 @@ from config import CLUSTER
 _logger = logging.getLogger('uvicorn.error')
 
 class WinningBid(BaseModel):
-    # timestamp: int
-    # diff: int
     auction_id: int
     bid_id: int
     item: str

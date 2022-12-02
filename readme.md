@@ -8,7 +8,7 @@ The purpose of this repo is to add a client component beyond `psql`. Here, we ha
 Another great thing about Materialize is that it supports Strict Serializability, which is the [highest level of consistency](http://jepsen.io/consistency). What that means in this demo is when our server receives an auction winner, we can be certain that person actually won the auction. We don't have to implement extra logic to account for eventual consistency (avoiding having to learn a complex stream processing framework in the process). We just read from Materialize like we would any Postgres database, and we don't have to care that it's powered by an [awesome stream processing engine underneath](https://timelydataflow.github.io/differential-dataflow/)
 
 ## Quick Video
-[![short video demo](https://img.youtube.com/vi/3PpQXAZqWsQ/0.jpg)](https://youtu.be/3PpQXAZqWsQ_0)
+[![short video demo](https://img.youtube.com/vi/smAkr--SIJc/0.jpg)](https://youtu.be/smAkr--SIJc_0)
 ## Setup
 
 ### Materialize Database
@@ -79,7 +79,13 @@ Create a virtual environment and install required dependencies.
         
         uvicorn main:app
 
-1. Open http://localhost:8000/subscribe
+1. Open http://localhost:8000/subscribe in your browser or with `curl` to receive a continuous stream of winning bids (past, present, and future).
+
+1. You can also include query parameters for `amount` to get real-time updates on auctions that were won with specific dollar amounts, like 
+    - http://localhost:8000/subscribe/?amount=95
+    - http://localhost:8000/subscribe/?amount=83&amount=84&amount=85&amount=97
+
+    This is actually **very** cool. Other real-time stream processors would spin up new dataflows for each client, which is not scalable. Since we are reading off an in-memory index, Materialize serves the results to each client with efficient random access -- no extra dataflows are necessary.
 
 
 ## Teardown
