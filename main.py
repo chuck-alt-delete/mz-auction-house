@@ -9,6 +9,8 @@ from sse_starlette.sse import EventSourceResponse
 from fastapi import FastAPI, Request
 from fastapi.logger import logger
 import uvicorn
+from typing import Union
+
 
 from event_generator import event_generator, WinningBid
 from config import DSN
@@ -28,12 +30,12 @@ async def root():
     '''Shill Materialize'''
     return {"message": "Hello world. Check out materialize.com!"}
 
-@app.get("/subscribe", amount: int, response_model=WinningBid)
-async def message_stream(request: Request):
+@app.get("/subscribe/", response_model=WinningBid)
+async def message_stream(request: Request, amount: Union[int, None] = None):
     '''Create async database connection and retrieve events from the event generator for SSE'''
     conn = await psycopg.AsyncConnection.connect(DSN)
     conn.add_notice_handler(log_db_diagnosis_callback)
-    return (EventSourceResponse(event_generator(request, conn)))
+    return (EventSourceResponse(event_generator(request, conn, amount)))
 
 if __name__ == "__main__":
     logger.setLevel(_logger.level)
