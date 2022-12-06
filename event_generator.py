@@ -38,6 +38,9 @@ async def event_generator(request: Request, conn: psycopg.AsyncConnection, amoun
                     _logger.info("Using Materialize cluster %s", CLUSTER)
                     # Subscribe to an endless stream of updates
                     if amount:
+                        # Subscribe doesn't allow server side binding, so we use Literal here.
+                        # This is ok because FastAPI's OpenAPI spec automatically validates user input,
+                        # so SQL injection is not an issue here.
                         rows = cur.stream(
                             SQL("SUBSCRIBE (SELECT auction_id, bid_id, item, amount FROM winning_bids WHERE amount in ({}) )")
                                 .format(SQL(', ').join(Literal(val) for val in amount))
