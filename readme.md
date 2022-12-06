@@ -60,7 +60,7 @@ This web application assumes the existence of a Materialize database with the Au
     SELECT * FROM highest_bid_per_auction
     WHERE end_time < mz_now();
 
-    CREATE DEFAULT INDEX winning_bids_idx ON winning_bids;
+    CREATE INDEX winning_bids_idx_amount ON winning_bids (amount);
 
     EOF
     ```
