@@ -15,12 +15,16 @@ from config import CLUSTER
 _logger = logging.getLogger('uvicorn.error')
 
 class WinningBid(BaseModel):
+    '''Bid for an item at an auction'''
     auction_id: int
     bid_id: int
     item: str
     amount: int
 
-async def event_generator(request: Request, conn: psycopg.AsyncConnection, amount: list[int] | None = None) -> WinningBid:
+async def event_generator(
+    request: Request,
+    conn: psycopg.AsyncConnection,
+    amount: list[int] | None = None) -> WinningBid:
     '''
     Generate events that go to the browser with Server Sent Events (SSE).
     Materialize will push events whenever someone's bid has won an auction.
@@ -39,16 +43,23 @@ async def event_generator(request: Request, conn: psycopg.AsyncConnection, amoun
                     # Subscribe to an endless stream of updates
                     if amount:
                         # Subscribe doesn't allow server side binding, so we use Literal here.
-                        # This is ok because FastAPI's OpenAPI spec automatically validates user input,
+                        # This is ok because the OpenAPI spec automatically validates user input,
                         # so SQL injection is not an issue here.
                         rows = cur.stream(
-                            SQL("SUBSCRIBE (SELECT auction_id, bid_id, item, amount FROM winning_bids WHERE amount in ({}) )")
+                            SQL("""
+                            SUBSCRIBE (
+                                SELECT auction_id, bid_id, item, amount
+                                FROM winning_bids
+                                WHERE amount in ({})
+                                )""")
                                 .format(SQL(', ').join(Literal(val) for val in amount))
                         )
                     else:
-                        rows = cur.stream("SUBSCRIBE (SELECT auction_id, bid_id, item, amount FROM winning_bids)")
+                        rows = cur.stream("""SUBSCRIBE (
+                            SELECT auction_id, bid_id, item, amount
+                            FROM winning_bids
+                            )""")
                     async for row in rows:
                         yield row
-                
     except Exception as err:
         _logger.error(err)
