@@ -8,6 +8,7 @@ from psycopg_pool import AsyncConnectionPool
 from sse_starlette.sse import EventSourceResponse
 from fastapi import FastAPI, Request, Query
 from fastapi.logger import logger
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 
@@ -26,6 +27,20 @@ pool = AsyncConnectionPool(DSN)
 # Init FastAPI app
 app = FastAPI()
 
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.on_event("startup")
 def open_pool():
     """create database connection pool"""
@@ -35,6 +50,7 @@ def open_pool():
 def close_pool():
     """close database connection pool"""
     pool.close()
+
 
 @app.get("/")
 async def root():
