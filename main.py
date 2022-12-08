@@ -5,6 +5,7 @@ Materialize will push events whenever someone's bid has won an auction.
 
 import logging
 import psycopg
+from psycopg_pool import AsyncConnectionPool
 from sse_starlette.sse import EventSourceResponse
 from fastapi import FastAPI, Request, Query
 from fastapi.logger import logger
@@ -18,11 +19,21 @@ from config import DSN
 _logger = logging.getLogger('uvicorn.error')
 # Connect _logger with FastAPI's logging
 logger.handlers = _logger.handlers
-def log_db_diagnosis_callback(diagnosis: psycopg.Error.diag):
-    '''Include database diagnostic messages in server logs'''
-    _logger.info(f"The database says: {diagnosis.severity} - {diagnosis.message_primary}")
 
+
+# Init database connection pool
+pool = AsyncConnectionPool(DSN)
+
+# Init FastAPI app
 app = FastAPI()
+
+@app.on_event("startup")
+def open_pool():
+    pool.open()
+
+@app.on_event("shutdown")
+def close_pool():
+    pool.close()
 
 @app.get("/")
 async def root():
@@ -32,9 +43,7 @@ async def root():
 @app.get("/subscribe/", response_model=WinningBid)
 async def message_stream(request: Request, amount: list[int] | None = Query(default=None)):
     '''Create async database connection and retrieve events from the event generator for SSE'''
-    conn = await psycopg.AsyncConnection.connect(DSN)
-    conn.add_notice_handler(log_db_diagnosis_callback)
-    return (EventSourceResponse(event_generator(request, conn, amount)))
+    return (EventSourceResponse(event_generator(request, pool, amount)))
 
 if __name__ == "__main__":
     logger.setLevel(_logger.level)

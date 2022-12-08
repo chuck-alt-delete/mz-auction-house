@@ -3,4 +3,5 @@ sse-starlette
 uvicorn[standard]
 python-dotenv
 psycopg[binary]
+psycopg_pool
 pydantic
