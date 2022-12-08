@@ -27,6 +27,24 @@ function parse(str: String): Auction {
     return obj;
 }
 
+function parse_amount(str: string | null | undefined): string {
+
+    if (!str) {
+        return ""
+    }
+    var amounts = str.split(',');
+    if (!amounts) {
+        return ""
+    }
+    var result = "?"
+    while (amounts.length > 0) {
+        const current_amount = amounts.pop();
+        result += `amount=${current_amount}&`;
+    }
+    result = result.replace(/&$/,'');
+    return result;
+}
+
 export interface Auction {
     item: String;
     amount: String;
@@ -41,9 +59,10 @@ interface Props {
 export default function Test(props: Props) {
     const [auctions, setAuctions] = useState<Array<Auction>>([]);
     const { value } = props;
+    const amount = parse_amount(value)
 
     useEffect(() => {
-        const url = value ? `http://localhost:8000/subscribe?amount=${value}` : "http://localhost:8000/subscribe" ;
+        const url = value ? `http://localhost:8000/subscribe${amount}` : "http://localhost:8000/subscribe" ;
 
         if ('EventSource' in window) {
           const source = new EventSource(url);
