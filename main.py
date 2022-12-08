@@ -22,7 +22,7 @@ logger.handlers = _logger.handlers
 
 
 # Init database connection pool
-pool = AsyncConnectionPool(DSN)
+pool = AsyncConnectionPool(DSN,max_size=1000)
 
 # Init FastAPI app
 app = FastAPI()
@@ -47,9 +47,9 @@ def open_pool():
     pool.open()
 
 @app.on_event("shutdown")
-def close_pool():
+async def close_pool():
     """close database connection pool"""
-    pool.close()
+    await pool.close()
 
 
 @app.get("/")

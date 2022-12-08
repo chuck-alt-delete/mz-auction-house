@@ -35,7 +35,6 @@ async def event_generator(
     '''
     try:
         while True:
-            # Detect when user disconnects and exit the event loop
             if await request.is_disconnected():
                 break
             # Asycronously get real-time updates from Materialize
@@ -66,5 +65,9 @@ async def event_generator(
                             )""")
                     async for row in rows:
                         yield row
+                    # Detect when user disconnects and exit the event loop
+                    if await request.is_disconnected():
+                        await conn.close()
+                        break
     except Exception as err:
         _logger.error(err)
