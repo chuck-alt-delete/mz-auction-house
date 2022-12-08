@@ -8,6 +8,7 @@ import psycopg
 from sse_starlette.sse import EventSourceResponse
 from fastapi import FastAPI, Request, Query
 from fastapi.logger import logger
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 
@@ -23,6 +24,19 @@ def log_db_diagnosis_callback(diagnosis: psycopg.Error.diag):
     _logger.info(f"The database says: {diagnosis.severity} - {diagnosis.message_primary}")
 
 app = FastAPI()
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():
