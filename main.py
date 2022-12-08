@@ -4,7 +4,6 @@ Materialize will push events whenever someone's bid has won an auction.
 '''
 
 import logging
-import psycopg
 from psycopg_pool import AsyncConnectionPool
 from sse_starlette.sse import EventSourceResponse
 from fastapi import FastAPI, Request, Query
@@ -29,10 +28,12 @@ app = FastAPI()
 
 @app.on_event("startup")
 def open_pool():
+    """create database connection pool"""
     pool.open()
 
 @app.on_event("shutdown")
 def close_pool():
+    """close database connection pool"""
     pool.close()
 
 @app.get("/")
@@ -42,7 +43,7 @@ async def root():
 
 @app.get("/subscribe/", response_model=WinningBid)
 async def message_stream(request: Request, amount: list[int] | None = Query(default=None)):
-    '''Create async database connection and retrieve events from the event generator for SSE'''
+    '''Retrieve events from the event generator for SSE'''
     return (EventSourceResponse(event_generator(request, pool, amount)))
 
 if __name__ == "__main__":

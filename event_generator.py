@@ -65,6 +65,6 @@ async def event_generator(
                             FROM winning_bids
                             )""")
                     async for row in rows:
-                        yield row 
+                        yield row
     except Exception as err:
         _logger.error(err)
