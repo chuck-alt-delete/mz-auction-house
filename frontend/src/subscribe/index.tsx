@@ -62,7 +62,7 @@ export default function Test(props: Props) {
     const amount = parse_amount(value)
 
     useEffect(() => {
-        const url = value ? `http://localhost:8000/subscribe${amount}` : "http://localhost:8000/subscribe" ;
+        const url = `http://localhost:8000/subscribe${amount}`
 
         if ('EventSource' in window) {
           const source = new EventSource(url);
