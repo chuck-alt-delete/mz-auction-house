@@ -5,7 +5,7 @@ The [Materialize quickstart](https://materialize.com/docs/get-started/) is a gre
 
 The purpose of this repo is to add a client component beyond `psql`. Here, we have a webserver built with `fastapi` that reads auction winners from Materialize in real-time using Server Sent Events. One of the great features of Materialize is that it's Postgres wire compatible, so we can use the typical `psycopg` library just like any Postgres database. We build upon the [psycopg3 example in the docs](https://materialize.com/docs/integrations/python/#streaming-with-psycopg3) to make the database connection asynchronous and to add Server Sent Events with `sse_starlette`.
 
-Another great thing about Materialize is that it supports Strict Serializability, which is the [highest level of consistency](http://jepsen.io/consistency). What that means in this demo is when our server receives an auction winner, we can be certain that person actually won the auction. We don't have to implement extra logic to account for eventual consistency (avoiding having to learn a complex stream processing framework in the process). We just read from Materialize like we would any Postgres database, and we don't have to care that it's powered by an [awesome stream processing engine underneath](https://timelydataflow.github.io/differential-dataflow/)
+Another great thing about Materialize is that it supports Strict Serializability, which is the [highest level of consistency](http://jepsen.io/consistency). In our application, that means every observer at any given time will agree on the highest bid price for an item. There is no need to implement extra logic to account for eventual consistency (avoiding having to learn a complex stream processing framework in the process). We just read from Materialize like we would any Postgres database, and we don't have to care that it's powered by an [awesome stream processing engine underneath](https://timelydataflow.github.io/differential-dataflow/)
 
 ## Quick Video
 [![short video demo](https://img.youtube.com/vi/smAkr--SIJc/0.jpg)](https://youtu.be/smAkr--SIJc_0)
@@ -87,6 +87,16 @@ Create a virtual environment and install required dependencies.
 
     This is actually **very** cool. Other real-time stream processors would spin up new dataflows for each client, which is not scalable. Since we are reading off an in-memory index, Materialize serves the results to each client with efficient random access -- no extra dataflows are necessary.
 
+## Run the frontend
+
+1. Start
+
+        yarn start
+    
+2. Go to http://localhost:3000 in your browser.
+
+
+See [frontend](./frontend/README.md) for more setup details.
 
 ## Teardown
 
