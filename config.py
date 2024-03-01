@@ -1,15 +1,22 @@
 from dotenv import dotenv_values
+from pathlib import Path
+
+path_to_env = Path(__file__).parent.absolute() / ".env"
 
 # Load values from .env file into config dictionary.
-# See example.env for what variables you need to define.
-config = dotenv_values()
+config = dotenv_values(path_to_env)
 
-# Set Materialize cluster name
-CLUSTER = "auction_house"
+config["options"] = ''
+if config["MZ_CLUSTER"]:
+    config["options"] += f'--cluster={config["MZ_CLUSTER"]}'
+else:
+    config["options"] += '--cluster=quickstart'
 
-# Create Data Source Name (DSN) string
-DSN = f'user={config["MZ_EMAIL_PREFIX"]}@{config["MZ_EMAIL_SUFFIX"]} password={config["MZ_PASSWORD"]} host={config["MZ_HOST"]} port={config["MZ_PORT"]} dbname={config["MZ_DB"]} sslmode=require'
+if config["MZ_TRANSACTION_ISOLATION"]:
+    config["options"] += f' -c transaction_isolation={config["MZ_TRANSACTION_ISOLATION"]}'
+
+if config["MZ_SCHEMA"]:
+    config["options"] += f' -c search_path={config["MZ_SCHEMA"]}'
 
 if __name__=="__main__":
     print(config)
-    print(DSN)

@@ -5,24 +5,21 @@ Materialize will push events whenever someone's bid has won an auction.
 
 import logging
 from psycopg_pool import AsyncConnectionPool
+from psycopg import conninfo
 from sse_starlette.sse import EventSourceResponse
 from fastapi import FastAPI, Request, Query
 from fastapi.logger import logger
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-
+from config import config
 from event_generator import event_generator, WinningBid
-from config import DSN
 
 # Logging stuff
 _logger = logging.getLogger('uvicorn.error')
 # Connect _logger with FastAPI's logging
 logger.handlers = _logger.handlers
 
-
-# Init database connection pool
-pool = AsyncConnectionPool(DSN,max_size=1000)
 
 # Init FastAPI app
 app = FastAPI()
@@ -44,12 +41,25 @@ app.add_middleware(
 @app.on_event("startup")
 def open_pool():
     """create database connection pool"""
-    pool.open()
+    app.state.pool = AsyncConnectionPool(
+        conninfo = conninfo.make_conninfo(
+            user = config["MZ_USER"],
+            dbname = config["MZ_DB"],
+            host = config["MZ_HOST"],
+            password = config["MZ_PASSWORD"],
+            port = 6875,
+            sslmode = 'require',
+            application_name = 'FastAPI',
+            options = config["options"],
+        ),
+        max_size = 500,
+        min_size = 5
+    )
 
 @app.on_event("shutdown")
 async def close_pool():
     """close database connection pool"""
-    await pool.close()
+    await app.state.pool.close()
 
 
 @app.get("/")
@@ -60,7 +70,7 @@ async def root():
 @app.get("/subscribe/", response_model=WinningBid)
 async def message_stream(request: Request, amount: list[int] | None = Query(default=None)):
     '''Retrieve events from the event generator for SSE'''
-    return (EventSourceResponse(event_generator(request, pool, amount)))
+    return (EventSourceResponse(event_generator(request, app.state.pool, amount)))
 
 if __name__ == "__main__":
     logger.setLevel(_logger.level)
