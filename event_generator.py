@@ -59,4 +59,4 @@ async def event_generator(
                     await conn.close()
                     break
     except Exception as err:
-        _logger.error(err)
+        _logger.exception(err)
