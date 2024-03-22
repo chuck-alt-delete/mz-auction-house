@@ -90,12 +90,15 @@ Create a virtual environment and install required dependencies.
     This is actually **very** cool. Other real-time stream processors would spin up new dataflows for each client, which is not scalable. Since we are reading off an in-memory index, Materialize serves the results to each client with efficient random access -- no extra dataflows are necessary.
 
 ## Run the frontend
+1. Change directory.
+
+        cd frontend
 
 1. Start
 
         yarn start
     
-2. Go to http://localhost:3000 in your browser.
+1.. Go to http://localhost:3000 in your browser.
 
 
 See [frontend](./frontend/README.md) for more setup details.
