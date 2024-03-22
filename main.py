@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from config import config
-from event_generator import event_generator, WinningBid
+from event_generator import event_generator, notify_generator, WinningBid
 
 # Logging stuff
 _logger = logging.getLogger('uvicorn.error')
@@ -48,7 +48,6 @@ def open_pool():
             host = config["MZ_HOST"],
             password = config["MZ_PASSWORD"],
             port = 6875,
-            sslmode = 'require',
             application_name = 'FastAPI',
             options = config["options"],
         ),
@@ -70,7 +69,7 @@ async def root():
 @app.get("/subscribe/", response_model=WinningBid)
 async def message_stream(request: Request, amount: list[int] | None = Query(default=None)):
     '''Retrieve events from the event generator for SSE'''
-    return (EventSourceResponse(event_generator(request, app.state.pool, amount)))
+    return (EventSourceResponse(notify_generator(request, app.state.pool, amount)))
 
 if __name__ == "__main__":
     logger.setLevel(_logger.level)
